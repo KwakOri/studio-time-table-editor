@@ -1,5 +1,5 @@
 import * as htmlToImage from "html-to-image";
-import React, { useState } from "react";
+import React, { useEffect, useState, type ChangeEvent } from "react";
 
 interface Data {
   day: number;
@@ -13,19 +13,83 @@ const weekdays = ["월", "화", "수", "목", "금", "토", "일"];
 const profileImageHeight = 720;
 const profileImageWidth = 540;
 
+const getDefaultMondayString = (): string => {
+  const today = new Date();
+  const day = today.getDay(); // 0 (Sun) ~ 6 (Sat)
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMonday);
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString().split("T")[0];
+};
+
 const TimeTableEditor: React.FC = () => {
   const [scale, setScale] = useState(0.5);
   const [data, setData] = useState<Data[]>([
-    { day: 0, isHoliday: false, time: "09:00", description: "상세 내용" },
-    { day: 1, isHoliday: false, time: "09:00", description: "상세 내용" },
-    { day: 2, isHoliday: false, time: "09:00", description: "상세 내용" },
-    { day: 3, isHoliday: false, time: "09:00", description: "상세 내용" },
-    { day: 4, isHoliday: false, time: "09:00", description: "상세 내용" },
-    { day: 5, isHoliday: false, time: "09:00", description: "상세 내용" },
-    { day: 6, isHoliday: false, time: "09:00", description: "상세 내용" },
+    { day: 0, isHoliday: false, time: "09:00", description: "한 줄당 7글자" },
+    { day: 1, isHoliday: false, time: "09:00", description: "한 줄당 7글자" },
+    { day: 2, isHoliday: false, time: "09:00", description: "한 줄당 7글자" },
+    { day: 3, isHoliday: false, time: "09:00", description: "한 줄당 7글자" },
+    { day: 4, isHoliday: false, time: "09:00", description: "한 줄당 7글자" },
+    { day: 5, isHoliday: false, time: "09:00", description: "한 줄당 7글자" },
+    { day: 6, isHoliday: false, time: "09:00", description: "한 줄당 7글자" },
   ]);
 
   const [imageSrc, setImageSrc] = useState<string | null>(null);
+
+  const [mondayDateStr, setMondayDateStr] = useState<string>(
+    getDefaultMondayString()
+  );
+  const [weekDates, setWeekDates] = useState<Date[]>([]);
+
+  // 월요일 기준으로 일주일 날짜 배열 반환
+
+  const getThisWeekDatesFromMonday = (monday: Date): Date[] => {
+    monday.setHours(0, 0, 0, 0);
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i); // +1일부터 시작
+      return date;
+    });
+  };
+
+  const isMonday = (dateStr: string): boolean => {
+    const date = new Date(dateStr);
+    return date.getDay() === 1;
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.value;
+    if (isMonday(selected)) {
+      setMondayDateStr(selected);
+    } else {
+      alert("⚠️ 선택한 날짜는 월요일이 아닙니다. 월요일만 선택 가능합니다.");
+    }
+  };
+
+  useEffect(() => {
+    const monday = new Date(mondayDateStr);
+    setWeekDates(getThisWeekDatesFromMonday(monday));
+  }, [mondayDateStr]);
+
+  useEffect(() => {
+    const getDefaultMondayString = (): string => {
+      const today = new Date();
+      const day = today.getDay(); // 0(일)~6(토)
+      const diffToMonday = day === 0 ? -6 : 1 - day;
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + diffToMonday + 1);
+      monday.setHours(0, 0, 0, 0);
+      return monday.toISOString().split("T")[0];
+    };
+
+    setMondayDateStr(getDefaultMondayString());
+  }, []);
+
+  console.log(new Date().getDay());
+
+  const containerWidth = 1280 * scale;
+  const containerHeight = 720 * scale;
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -63,9 +127,6 @@ const TimeTableEditor: React.FC = () => {
       });
   };
 
-  const containerWidth = 1280 * scale;
-  const containerHeight = 720 * scale;
-
   return (
     <div className="w-full h-full flex flex-col">
       <div className="w-full p-4 flex justify-between">
@@ -82,6 +143,12 @@ const TimeTableEditor: React.FC = () => {
             onChange={(e) => setScale(parseFloat(e.target.value))}
             className="w-64"
           />
+        </div>
+        <div className="p-4">
+          <label>
+            기준 월요일 선택:{" "}
+            <input type="date" value={mondayDateStr} onChange={handleChange} />
+          </label>
         </div>
         <button
           onClick={downloadImage}
@@ -110,13 +177,19 @@ const TimeTableEditor: React.FC = () => {
             >
               <div className="w-full h-full bg-[#5868a2] flex flex-col">
                 <div className="absolute left-20 top-20 -rotate-6 w-[640px] h-[640px] bg-[#4a5889] grid grid-cols-3 grid-rows-3 gap-[10px] justify-center items-center rounded-md z-20">
-                  <div className="col-span-2 row-span-1 w-full h-full">
-                    <div className="w-full h-full bg-[#3a466e] flex flex-col justify-center items-center text-white text-center">
-                      TITLE
-                    </div>
+                  <div className="col-span-2 row-span-1 w-full h-full bg-[#3a466e] flex flex-col justify-center items-center gap-4">
+                    <h1 className="text-white">TITLE</h1>
+                    {weekDates.length > 0 ? (
+                      <p className="text-white">
+                        {weekDates[0].getFullYear()}.
+                        {weekDates[0].getMonth() + 1}.{weekDates[0].getDate()} -
+                        {weekDates[6].getFullYear()}.
+                        {weekDates[6].getMonth() + 1}.{weekDates[6].getDate()}
+                      </p>
+                    ) : null}
                   </div>
 
-                  {data.map((time) => (
+                  {data.map((time, i) => (
                     <>
                       {time.isHoliday ? (
                         <div
@@ -124,7 +197,10 @@ const TimeTableEditor: React.FC = () => {
                           className="bg-[#8a3747] w-full h-full flex flex-col justify-center items-center"
                         >
                           <p className="text-white text-center">
-                            {weekdays[time.day]}
+                            <p className="text-white text-center">
+                              {weekdays[time.day]}{" "}
+                              {`(${weekDates[i].getDate()})`}
+                            </p>
                           </p>
                           <p className="text-white text-center">휴방</p>
                         </div>
@@ -133,11 +209,14 @@ const TimeTableEditor: React.FC = () => {
                           key={time.day}
                           className="bg-[#3a466e] w-full h-full flex flex-col justify-center items-center"
                         >
-                          <p className="text-white text-center">
-                            {weekdays[time.day]}
-                          </p>
+                          {weekDates.length > 0 ? (
+                            <p className="text-white text-center">
+                              {weekdays[time.day]}{" "}
+                              {`(${weekDates[i].getDate()})`}
+                            </p>
+                          ) : null}
                           <p className="text-white text-center">{time.time}</p>
-                          <p className="text-white text-center">
+                          <p className="text-white text-center py-2">
                             {time.description}
                           </p>
                         </div>
@@ -174,7 +253,7 @@ const TimeTableEditor: React.FC = () => {
                 key={day.day}
                 className="flex justify-center items-center gap-4 p-4 bg-gray-100 w-full"
               >
-                <p>{day.day}</p>
+                <p>{weekdays[day.day]}</p>
                 <button
                   className={`shrink-0 bg-gray-300 rounded-md p-2 cursor-pointer hover:brightness-90 ${
                     day.isHoliday ? "bg-gray-600 text-white" : ""
@@ -225,25 +304,6 @@ const TimeTableEditor: React.FC = () => {
                 className="hidden"
                 onChange={handleImageChange}
               />
-            </div>
-            <div
-              className={`bg-[#2d2d2d] text-white rounded-md flex justify-center items-center`}
-              style={{
-                width: profileImageWidth / 5,
-                height: profileImageHeight / 5,
-              }}
-            >
-              {imageSrc ? (
-                <img
-                  src={imageSrc}
-                  alt="preview"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex justify-center items-center">
-                  <p className="text-white text-center">미리보기</p>
-                </div>
-              )}
             </div>
           </div>
         </div>
