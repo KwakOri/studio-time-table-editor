@@ -5,6 +5,7 @@ interface Data {
   day: number;
   isHoliday: boolean;
   time: string;
+  description: string;
 }
 
 const weekdays = ["월", "화", "수", "목", "금", "토", "일"];
@@ -15,13 +16,13 @@ const profileImageWidth = 540;
 const TimeTableEditor: React.FC = () => {
   const [scale, setScale] = useState(0.5);
   const [data, setData] = useState<Data[]>([
-    { day: 0, isHoliday: false, time: "09:00" },
-    { day: 1, isHoliday: false, time: "09:00" },
-    { day: 2, isHoliday: false, time: "09:00" },
-    { day: 3, isHoliday: false, time: "09:00" },
-    { day: 4, isHoliday: false, time: "09:00" },
-    { day: 5, isHoliday: false, time: "09:00" },
-    { day: 6, isHoliday: false, time: "09:00" },
+    { day: 0, isHoliday: false, time: "09:00", description: "상세 내용" },
+    { day: 1, isHoliday: false, time: "09:00", description: "상세 내용" },
+    { day: 2, isHoliday: false, time: "09:00", description: "상세 내용" },
+    { day: 3, isHoliday: false, time: "09:00", description: "상세 내용" },
+    { day: 4, isHoliday: false, time: "09:00", description: "상세 내용" },
+    { day: 5, isHoliday: false, time: "09:00", description: "상세 내용" },
+    { day: 6, isHoliday: false, time: "09:00", description: "상세 내용" },
   ]);
 
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -90,7 +91,7 @@ const TimeTableEditor: React.FC = () => {
         </button>
       </div>
       <div className="flex grow">
-        <div className="w-full flex justify-center items-center">
+        <div className=" flex justify-center items-center grow">
           <div
             className="border rounded shadow bg-gray-50"
             style={{
@@ -136,6 +137,9 @@ const TimeTableEditor: React.FC = () => {
                             {weekdays[time.day]}
                           </p>
                           <p className="text-white text-center">{time.time}</p>
+                          <p className="text-white text-center">
+                            {time.description}
+                          </p>
                         </div>
                       )}
                     </>
@@ -163,16 +167,16 @@ const TimeTableEditor: React.FC = () => {
           </div>
         </div>
 
-        <div className="w-1/4 h-full flex flex-col justify-center">
-          <div className="flex flex-col gap-2">
+        <div className="w-1/3 h-full flex flex-col justify-center">
+          <div className="flex flex-col gap-2 w-full">
             {data.map((day, index) => (
               <div
                 key={day.day}
-                className="flex justify-center items-center gap-4 p-4 bg-gray-100"
+                className="flex justify-center items-center gap-4 p-4 bg-gray-100 w-full"
               >
                 <p>{day.day}</p>
                 <button
-                  className={`bg-gray-300 rounded-md p-2 cursor-pointer hover:brightness-90 ${
+                  className={`shrink-0 bg-gray-300 rounded-md p-2 cursor-pointer hover:brightness-90 ${
                     day.isHoliday ? "bg-gray-600 text-white" : ""
                   }`}
                   onClick={() => {
@@ -191,6 +195,16 @@ const TimeTableEditor: React.FC = () => {
                   onChange={(e) => {
                     const newData = [...data];
                     newData[index].time = e.target.value;
+                    setData(newData);
+                  }}
+                />
+                <input
+                  value={day.description}
+                  className={`bg-gray-200 rounded-md p-2  `}
+                  type={"text"}
+                  onChange={(e) => {
+                    const newData = [...data];
+                    newData[index].description = e.target.value;
                     setData(newData);
                   }}
                 />
